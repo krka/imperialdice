@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Imperial dice</title>
+<style>
+div.group {
+  border: 1px black solid;
+  float: left;
+  padding: 1em;
+  width: 60em;
+}
+#addnew {
+  width: 100%;
+  float: left;
+}
+td {
+ border: 1px black solid;
+}
+
+td.percent {
+  background-image: linear-gradient(to right, rgba(0, 150, 0, 1) 0%, rgba(0, 175, 0, 1) 17%, rgba(0, 190, 0, 1) 33%, rgba(82, 210, 82, 1) 67%, rgba(131, 230, 131, 1) 83%, rgba(180, 221, 180, 1) 100%);  /* your gradient */
+  background-repeat: no-repeat;  /* don't remove */
+}
+
+</style>
+</head>
+<body>
+<div id="noscript">This page does not work with javascript disabled</div>
+<div id="main"></div>
+<div id="addnew">
+<input onclick="addNew()" value="Add new" type="button"/>
+</div>
+<script>
+document.getElementById("noscript").remove();
+
+// UI functions
+
+function prettyStr(s) {
+  if (s.length <= 0) {
+    return s;
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function prettyPrintCumulativeTable(node, table) {
+  var html = "";
+  for (var type in table) {
+    html += "<h3>" + prettyStr(type) + "</h3>";
+    html += "<table><thead><tr><th>Value</th><th>Probability</th></tr></thead><tbody>";
+    var t = table[type];
+    for (var i in t) {
+      var obj = t[i];
+      var value = obj["value"];
+      if (value != "0") {
+        var prob = (100*obj["prob"]).toPrecision(3) + "%";
+        html += "<tr><td>&#8805;" + value + "</td><td class='percent' style='background-size: " + prob + " 100%'>" + prob + "</td></tr>";
+      }
+    }
+    html += "</tbody></table>";
+  }
+  node.innerHTML = html;
+}
+
+function updateContainer(container) {
+  var dice = container["dice"];
+  var dicenames = container["dicenames"];
+  var counters = "";
+  var resTable = {};
+
+  for (var i in dicenames) {
+    var name = dicenames[i];
+    var count = dice[name]["count"];
+    var obj = dice[name];
+    if (count > 0) {
+      var tmpTable = repeatTable(container["tables"][name], count);
+      resTable = mergeTables(resTable, tmpTable);
+      container["dice"][name]["removeNode"].disabled = false;
+      if (counters.length > 0) {
+        counters += ", ";
+      }
+      counters += name + ": " + count;
+    } else {
+      container["dice"][name]["removeNode"].disabled = true;
+    }
+  }
+  container["countersNode"].innerHTML = counters;
+
+  var t = toCumulative(resTable);
+  prettyPrintCumulativeTable(container["resultNode"], t);
+}
+
+function addDie(container, name) {
+  container["dice"][name]["count"]++;
+  updateContainer(container);
+}
+
+function removeDie(container, name) {
+  if (container["dice"][name]["count"] >= 1) {
+    container["dice"][name]["count"]--;
+    updateContainer(container);
+  }
+}
+
+function createButtons(container, name) {
+  var child = document.createElement("span");
+  var add = document.createElement("input");
+  add.value = "Add " + name;
+  add.type = "button";
+  add.onclick = function() { addDie(container, name); };
+  var remove = document.createElement("input");
+  remove.value = "Remove " + name;
+  remove.type = "button";
+  remove.onclick = function() { removeDie(container, name); };
+  remove.disabled = true;
+  child.appendChild(add);
+  child.appendChild(remove);
+  container["dice"][name]["addNode"] = add;
+  container["dice"][name]["removeNode"] = remove;
+  return child;
+}
+
+function addNew() {
+  var dice = ["red", "blue", "green", "yellow"];
+  var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable};
+  var container = {"dice": {}, "dicenames": dice, "tables": tables};
+  var child = document.createElement("div");
+  child.className = "group";
+
+  var buttons = document.createElement("span");
+  buttons.className = "buttons";
+  for (var i in dice) {
+    var name = dice[i];
+    container["dice"][name] = {"count": 0};
+    var buttonsNode = createButtons(container, name);
+    buttons.appendChild(buttonsNode);
+  }
+  child.appendChild(buttons);
+  
+  var counters = document.createElement("div");
+  counters.className = "counters";
+  child.appendChild(counters);
+  container["countersNode"] = counters;
+
+  var result = document.createElement("div");
+  counters.className = "result";
+  child.appendChild(result);
+  container["resultNode"] = result;
+
+  document.getElementById("main").appendChild(child);
+}
+
+// Logic functions
+
+function addSideToTable(table, side, prob) {
+  for (var type in side) {
+    var value = side[type];
+    table[type] = table[type] || [];
+    table[type][value] = (table[type][value] || 0.0) + prob;
+  }
+}
+
+function dieToTable(die) {
+  var table = {};
+  var numSides = die.length;
+  var prob = 1.0 / numSides;
+  for (var index in die) {
+    addSideToTable(table, die[index], prob);
+  }
+  for (var type in table) {
+    var t2 = table[type];
+    var totalProb = 0.0;
+    for (var value in t2) {
+      totalProb += t2[value];
+    }
+    // Only require remainder to be more than zero, but add some margin for rounding errors
+    var remainder = 1.0 - totalProb;
+    if (remainder >= prob / 2) {
+     t2[0] = remainder;
+    }
+  }
+  return table;
+}
+
+function isEmptyTable(t) {
+  for (var key in t) {
+    return false;
+  }
+  return true;
+}
+
+function mergePair(t1, t2) {
+  if (isEmptyTable(t1)) {
+    return t2;
+  }
+  if (isEmptyTable(t2)) {
+    return t1;
+  }
+  var result = {};
+  for (var type in t1) {
+    mergeType(type, result, t1, t2)
+  }
+  for (var type in t2) {
+    if (!(type in t1)) {
+      mergeType(type, result, t1, t2)
+    }
+  }
+  return result;
+}
+
+function mergeTables() {
+  var n = arguments.length;
+  if (n <= 0) {
+    return {};
+  }
+  var res = arguments[0]; 
+  for (var i = 1; i < n; i++) {
+    res = mergePair(res, arguments[i]);
+  }
+  return res;
+}
+
+
+function mergeType(type, result, t1, t2) {
+  if (!(type in t1)) {
+    result[type] = t2[type];
+    return;
+  }
+  if (!(type in t1)) {
+    result[type] = t1[type];
+    return;
+  }
+
+  var res = [];
+  result[type] = res;
+  var x1 = t1[type];
+  var x2 = t2[type];
+  for (var v1 in x1) {
+    for (var v2 in x2) {
+      var sum = parseInt(v1) + parseInt(v2);
+      res[sum] = (res[sum] || 0) + x1[v1] * x2[v2];
+    }
+  }
+}
+
+function repeatTable(table, count) {
+  if (count <= 0) {
+    return {};
+  }
+  if (count <= 1) {
+    return table;
+  }
+  if (count <= 2) {
+    return mergeTables(table, table);
+  }
+  var x = Math.floor(count / 2)
+  var half = repeatTable(table, x);
+  var whole = mergeTables(half, half);
+  if (count > 2*x) {
+    whole = mergeTables(whole, table);
+  }
+  return whole;
+}
+
+function toCumulativeType(type) {
+  var res = [];
+  for (var value in type) {
+    res.push({"value": parseInt(value), "prob": type[value]})
+  }
+  res.sort(function(a, b) {return b["value"] - a["value"]})
+
+  var a = 0;
+  for (var index in res) {
+    var obj = res[index];
+    a = Math.min(1, a + obj["prob"]);
+    obj["prob"] = a;
+  }
+  res.reverse();
+  return res;
+}
+
+function toCumulative(table) {
+  var res = {};
+  for (var type in table) {
+    res[type] = toCumulativeType(table[type]);
+  }
+  return res;
+}
+
+// Source: image search for "imperial assault dice"
+var redDie = [
+  {"damage": 1},
+  {"damage": 2},
+  {"damage": 2},
+  {"damage": 2, "surge": 1},
+  {"damage": 3},
+  {"damage": 3}
+];
+var redTable = dieToTable(redDie);
+var blueDie = [
+  {"range": 2, "surge": 1},
+  {"range": 2, "damage": 1},
+  {"range": 3, "damage": 2},
+  {"range": 3, "damage": 1, "surge": 1},
+  {"range": 4, "damage": 2},
+  {"range": 5, "damage": 1}
+];
+var blueTable = dieToTable(blueDie);
+var greenDie = [
+  {"range": 1, "surge": 1},
+  {"range": 1, "damage": 1, "surge": 1},
+  {"range": 1, "damage": 2},
+  {"range": 2, "damage": 1, "surge": 1},
+  {"range": 2, "damage": 2},
+  {"range": 3, "damage": 2}
+];
+var greenTable = dieToTable(greenDie);
+var yellowDie = [
+  {"surge": 1},
+  {"damage": 1, "surge": 2},
+  {"range": 1, "damage": 2},
+  {"range": 1, "damage": 1, "surge": 1},
+  {"range": 2, "surge": 1},
+  {"range": 2, "damage": 1}  
+];
+var yellowTable = dieToTable(yellowDie);
+
+</script>
+</body>
+</html>
+
