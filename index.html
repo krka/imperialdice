@@ -91,7 +91,7 @@ function prettyStr(s) {
 }
 
 function prettyPrintCumulativeTable(node, dice, table) {
-  var html = "<h5>Dice</h5>";
+  var html = "<h4>Dice</h4>";
   for (var name in dice) {
     var count = dice[name]["count"];
     if (count > 0) {
@@ -109,7 +109,7 @@ function prettyPrintCumulativeTable(node, dice, table) {
 
   for (var type in table) {
     html += "<div class=\"table\">";
-    html += "<h5>" + prettyStr(type) + "</h5>";
+    html += "<h4>" + prettyStr(type) + "</h4>";
     html += "<table><thead><tr><th>Value</th><th>Probability</th></tr></thead><tbody>";
     var t = table[type];
     for (var i in t) {
