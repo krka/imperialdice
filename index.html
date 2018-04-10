@@ -4,23 +4,68 @@
 <meta charset="UTF-8">
 <title>Imperial dice</title>
 <style>
+
 div.group {
   border: 1px black solid;
   float: left;
   padding: 1em;
   width: 60em;
 }
-#bottom {
-  width: 100%;
+
+div.table {
   float: left;
+  padding-right: 2em;
+}
+
+div.breaker {
+  clear: both;
+}
+
+div.button-container {
+  float: left;
+  width: 5.5em;
+  height: 1.3em;
+  /*border: 1px black solid;*/
+  padding: 0.1em;
+  margin-right: 1em;
+}
+
+img.die-icon {
+  width: 1em;
+  height: 1em;
+}
+
+span.counter {
+  width: 2em;
+  height: 1em;
+  display: inline-block;
+  /*text-align: right*/
+}
+
+input.dice-button {
+  background-color: #aaa;
+  border: 1px black solid;
+  color: white;
+  padding: 1px 1px;
+  margin: 2px 2px;
+  text-align: center;
+  text-decoration: none;
+  width: 1em;
+  height: 1.2em;
+  display: inline-block;
+}
+
+th {
+  padding-right: 1em;
 }
 td {
- border: 1px black solid;
+  font-family: sans-serif;
 }
 
 td.percent {
-  background-image: linear-gradient(to right, rgba(0, 150, 0, 1) 0%, rgba(0, 175, 0, 1) 17%, rgba(0, 190, 0, 1) 33%, rgba(82, 210, 82, 1) 67%, rgba(131, 230, 131, 1) 83%, rgba(180, 221, 180, 1) 100%);  /* your gradient */
-  background-repeat: no-repeat;  /* don't remove */
+  border: 1px black solid;
+  background-image: linear-gradient(to right, rgba(0, 150, 0, 1) 0%, rgba(0, 175, 0, 1) 17%, rgba(0, 190, 0, 1) 33%, rgba(82, 210, 82, 1) 67%, rgba(131, 230, 131, 1) 83%, rgba(180, 221, 180, 1) 100%);
+  background-repeat: no-repeat;
 }
 
 </style>
@@ -28,6 +73,7 @@ td.percent {
 <body>
 <div id="noscript">This page does not work with javascript disabled</div>
 <div id="main"></div>
+<div class="breaker" />
 <div id="bottom">
 <input onclick="addNew()" value="Add new" type="button"/>
 <p>Source code: <a href="https://github.com/krka/imperialdice/">https://github.com/krka/imperialdice/</a></p>
@@ -44,10 +90,26 @@ function prettyStr(s) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function prettyPrintCumulativeTable(node, table) {
-  var html = "";
+function prettyPrintCumulativeTable(node, dice, table) {
+  var html = "<h5>Dice</h5>";
+  for (var name in dice) {
+    var count = dice[name]["count"];
+    if (count > 0) {
+      if (count < 5) {
+        for (var i = 0; i < count; i++) {
+           html += "<img src='" + name + ".png' class='die-icon'> ";
+        }
+      } else {
+           html += count + "x<img src='" + name + ".png' class='die-icon'> ";
+      }
+    }
+  }
+
+  html += "<div style='clear: both' />";
+
   for (var type in table) {
-    html += "<h3>" + prettyStr(type) + "</h3>";
+    html += "<div class=\"table\">";
+    html += "<h5>" + prettyStr(type) + "</h5>";
     html += "<table><thead><tr><th>Value</th><th>Probability</th></tr></thead><tbody>";
     var t = table[type];
     for (var i in t) {
@@ -58,37 +120,33 @@ function prettyPrintCumulativeTable(node, table) {
         html += "<tr><td>&#8805;" + value + "</td><td class='percent' style='background-size: " + prob + " 100%'>" + prob + "</td></tr>";
       }
     }
-    html += "</tbody></table>";
+    html += "</tbody></table></div>";
   }
+  html += "<div style='clear: both' />";
   node.innerHTML = html;
 }
 
 function updateContainer(container) {
   var dice = container["dice"];
   var dicenames = container["dicenames"];
-  var counters = "";
   var resTable = {};
 
   for (var i in dicenames) {
     var name = dicenames[i];
     var count = dice[name]["count"];
     var obj = dice[name];
+
+    container["dice"][name]["counter"].innerHTML = "" + count;
     if (count > 0) {
       var tmpTable = repeatTable(container["tables"][name], count);
       resTable = mergeTables(resTable, tmpTable);
       container["dice"][name]["removeNode"].disabled = false;
-      if (counters.length > 0) {
-        counters += ", ";
-      }
-      counters += name + ": " + count;
     } else {
       container["dice"][name]["removeNode"].disabled = true;
     }
   }
-  container["countersNode"].innerHTML = counters;
-
   var t = toCumulative(resTable);
-  prettyPrintCumulativeTable(container["resultNode"], t);
+  prettyPrintCumulativeTable(container["resultNode"], container["dice"], t);
 }
 
 function addDie(container, name) {
@@ -104,47 +162,72 @@ function removeDie(container, name) {
 }
 
 function createButtons(container, name) {
-  var child = document.createElement("span");
-  var add = document.createElement("input");
-  add.value = "Add " + name;
-  add.type = "button";
-  add.onclick = function() { addDie(container, name); };
+  var child = document.createElement("div");
+  child.className = "button-container";
+
+  var image = document.createElement("img");
+  image.src = name + ".png";
+  image.className = "die-icon";
+  child.appendChild(image);
+  
+
   var remove = document.createElement("input");
-  remove.value = "Remove " + name;
+  remove.className = "dice-button";
+  remove.value = "-";
   remove.type = "button";
   remove.onclick = function() { removeDie(container, name); };
   remove.disabled = true;
-  child.appendChild(add);
+
+  var add = document.createElement("input");
+  add.className = "dice-button";
+  add.value = "+";
+  add.type = "button";
+  add.onclick = function() { addDie(container, name); };
+
+  var counter = document.createElement("span");
+  counter.className = "counter";
+  counter.innerHTML = "0";
+
   child.appendChild(remove);
+  child.appendChild(add);
+  child.appendChild(counter);
+
   container["dice"][name]["addNode"] = add;
   container["dice"][name]["removeNode"] = remove;
+  container["dice"][name]["counter"] = counter;
+
+  var breaker = document.createElement("div");
+  breaker.className = "breaker";
+  child.appendChild(breaker);
+
   return child;
 }
 
 function addNew() {
-  var dice = ["red", "blue", "green", "yellow"];
-  var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable};
+  var dice = ["red", "blue", "green", "yellow", "black", "white"];
+  var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
   var container = {"dice": {}, "dicenames": dice, "tables": tables};
   var child = document.createElement("div");
   child.className = "group";
 
-  var buttons = document.createElement("span");
-  buttons.className = "buttons";
+  var buttons = document.createElement("div");
+  buttons.className = "buttons-row";
   for (var i in dice) {
     var name = dice[i];
     container["dice"][name] = {"count": 0};
     var buttonsNode = createButtons(container, name);
     buttons.appendChild(buttonsNode);
   }
-  child.appendChild(buttons);
-  
-  var counters = document.createElement("div");
-  counters.className = "counters";
-  child.appendChild(counters);
-  container["countersNode"] = counters;
 
+  var breaker = document.createElement("div");
+  breaker.className = "breaker";
+  buttons.appendChild(breaker);
+
+  child.appendChild(buttons);
+
+  
   var result = document.createElement("div");
-  counters.className = "result";
+  result.className = "result";
   child.appendChild(result);
   container["resultNode"] = result;
 
@@ -227,7 +310,7 @@ function mergeType(type, result, t1, t2) {
     result[type] = t2[type];
     return;
   }
-  if (!(type in t1)) {
+  if (!(type in t2)) {
     result[type] = t1[type];
     return;
   }
@@ -325,6 +408,26 @@ var yellowDie = [
   {"range": 2, "damage": 1}  
 ];
 var yellowTable = dieToTable(yellowDie);
+
+var blackDie = [
+  {"block": 1},
+  {"block": 1},
+  {"block": 2},
+  {"block": 2},
+  {"block": 3},
+  {"evade": 1}
+];
+var blackTable = dieToTable(blackDie);
+
+var whiteDie = [
+  {},
+  {"block": 1},
+  {"evade": 1},
+  {"block": 1, "evade": 1},
+  {"block": 1, "evade": 1},
+  {"dodge": 1}
+];
+var whiteTable = dieToTable(whiteDie);
 
 </script>
 </body>
