@@ -113,13 +113,17 @@ function prettyPrintCumulativeTable(node, dice, table) {
     html += "<table><thead><tr><th>Value</th><th>Probability</th></tr></thead><tbody>";
     var t = table[type];
     for (var i in t) {
-      var obj = t[i];
-      var value = obj["value"];
-      if (value != "0") {
-        var prob = (100*obj["prob"]).toPrecision(3) + "%";
-        html += "<tr><td>&#8805;" + value + "</td><td class='percent' style='background-size: " + prob + " 100%'>" + prob + "</td></tr>";
+      if (i != "expected") {
+        var obj = t[i];
+        var value = obj["value"];
+        var prob = obj["prob"];
+        if (value != "0") {
+          var probDisp = (100*prob).toPrecision(3) + "%";
+          html += "<tr><td>&#8805;" + value + "</td><td class='percent' style='background-size: " + probDisp + " 100%'>" + probDisp + "</td></tr>";
+        }
       }
     }
+    html += "<tr><td>Expected</td><td>" + t["expected"].toPrecision(3) + "</td></tr>";
     html += "</tbody></table></div>";
   }
   html += "<div style='clear: both' />";
@@ -252,11 +256,14 @@ function dieToTable(die) {
     addSideToTable(table, die[index], prob);
   }
   for (var type in table) {
+    var expected = 0;
     var t2 = table[type];
     var totalProb = 0.0;
     for (var value in t2) {
       totalProb += t2[value];
+      expected += value * t2[value];
     }
+    t2["expected"] = expected;
     // Only require remainder to be more than zero, but add some margin for rounding errors
     var remainder = 1.0 - totalProb;
     if (remainder >= prob / 2) {
@@ -320,11 +327,16 @@ function mergeType(type, result, t1, t2) {
   var x1 = t1[type];
   var x2 = t2[type];
   for (var v1 in x1) {
-    for (var v2 in x2) {
-      var sum = parseInt(v1) + parseInt(v2);
-      res[sum] = (res[sum] || 0) + x1[v1] * x2[v2];
+    if (v1 != "expected") {
+      for (var v2 in x2) {
+        if (v2 != "expected") {
+          var sum = parseInt(v1) + parseInt(v2);
+          res[sum] = (res[sum] || 0) + x1[v1] * x2[v2];
+        }
+      }
     }
   }
+  res["expected"] = x1["expected"] + x2["expected"];
 }
 
 function repeatTable(table, count) {
@@ -349,7 +361,9 @@ function repeatTable(table, count) {
 function toCumulativeType(type) {
   var res = [];
   for (var value in type) {
-    res.push({"value": parseInt(value), "prob": type[value]})
+    if (value != "expected") {
+      res.push({"value": parseInt(value), "prob": type[value]})
+    }
   }
   res.sort(function(a, b) {return b["value"] - a["value"]})
 
@@ -360,6 +374,7 @@ function toCumulativeType(type) {
     obj["prob"] = a;
   }
   res.reverse();
+  res["expected"] = type["expected"];
   return res;
 }
 
