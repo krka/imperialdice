@@ -141,13 +141,10 @@ function updateContainer(container) {
     var obj = dice[name];
 
     container["dice"][name]["counter"].innerHTML = "" + count;
-    if (count > 0) {
-      var tmpTable = repeatTable(container["tables"][name], count);
-      resTable = mergeTables(resTable, tmpTable);
-      container["dice"][name]["removeNode"].disabled = false;
-    } else {
-      container["dice"][name]["removeNode"].disabled = true;
-    }
+    var tmpTable = repeatTable(container["tables"][name], count);
+    resTable = mergeTables(resTable, tmpTable);
+
+    container["dice"][name]["removeNode"].disabled = count == 0;
   }
   var t = toCumulative(resTable);
   prettyPrintCumulativeTable(container["resultNode"], container["dice"], t);
