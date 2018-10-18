@@ -11,7 +11,7 @@ div.group {
   border: 1px black solid;
   float: left;
   padding: 0.5em;
-  margin-left: 6em;
+  margin-left: 10em;
   margin-bottom: 1em;
   width: 60em;
 }
@@ -31,16 +31,18 @@ div.breaker {
 
 div.button-container {
   float: left;
-  width: 5.5em;
-  height: 1.3em;
+  width: 11em;
+  height: 2.6em;
   /*border: 1px black solid;*/
   padding: 0.1em;
   margin-right: 1em;
 }
 
 img.die-icon {
-  width: 1em;
-  height: 1em;
+  padding: 1px 1px;
+  margin: 3px 3px;
+  width: 2em;
+  height: 2em;
 }
 
 span.counter {
@@ -50,7 +52,7 @@ span.counter {
   /*text-align: right*/
 }
 
-input.dice-button {
+div.dice-button {
   background-color: #aaa;
   border: 1px black solid;
   color: white;
@@ -58,8 +60,8 @@ input.dice-button {
   margin: 2px 2px;
   text-align: center;
   text-decoration: none;
-  width: 1em;
-  height: 1.2em;
+  width: 2em;
+  height: 2em;
   display: inline-block;
 }
 
@@ -120,10 +122,10 @@ td.percent.block {
 </head>
 <body>
 <div id="noscript">This page does not work with javascript disabled</div>
-<div id="buttons" style="position: fixed; left: 0; top: 0; width: 5em;">Dice</div>
+<div id="buttons" style="position: fixed; left: 0; top: 0; width: 5em;"></div>
 <div id="main"></div>
 <div class="breaker" />
-<div id="bottom" style="margin-left: 5em;">
+<div id="bottom" style="margin-left: 10em;">
 
 <p>Source code: <a href="https://github.com/krka/imperialdice/">https://github.com/krka/imperialdice/</a></p>
 </div>
@@ -223,8 +225,8 @@ function addDie(name) {
   updateContainer(container);
 }
 
-function removeDie(name) {
-  container = focused;
+function removeDie(name, container) {
+  container = container || focused;
   if (container["dice"][name]["count"] >= 1) {
     container["dice"][name]["count"]--;
     updateContainer(container);
@@ -241,17 +243,14 @@ function createButtons(name) {
   child.appendChild(image);
   
 
-  var remove = document.createElement("input");
+  var remove = document.createElement("div");
   remove.className = "dice-button";
-  remove.value = "-";
-  remove.type = "button";
+  //remove.innerHTML = "-";
   remove.onclick = function() { removeDie(name); };
-  remove.disabled = true;
 
-  var add = document.createElement("input");
+  var add = document.createElement("div");
   add.className = "dice-button";
-  add.value = "+";
-  add.type = "button";
+  //add.innerHTML = "+";
   add.onclick = function() { addDie(name); };
 
   var counter = document.createElement("span");
