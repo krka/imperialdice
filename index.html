@@ -82,12 +82,14 @@ th {
 }
 td {
   font-family: sans-serif;
+  text-align: right;
 }
 
 td.percent {
   border: 1px black solid;
   background-repeat: no-repeat;
   background-color: #bbb;
+  text-align: left;
 }
 
 td.percent.damage {
@@ -191,7 +193,8 @@ function prettyPrintCumulativeTable(node, dice, table) {
     if (t) {
       html += "<div class=\"table\">";
       html += "<h4>" + prettyStr(type) + "</h4>";
-      html += "<table><thead><tr><th>Value</th><th>Probability</th></tr></thead><tbody>";
+      html += "Average: " + t["expected"].toPrecision(3);
+      html += "<table><thead><tr><th>Val</th><th>Probability</th></tr></thead><tbody>";
       for (var i in t) {
         if (i != "expected") {
           var obj = t[i];
@@ -203,7 +206,6 @@ function prettyPrintCumulativeTable(node, dice, table) {
           }
         }
       }
-      html += "<tr><td>Expected</td><td>" + t["expected"].toPrecision(3) + "</td></tr>";
       html += "</tbody></table></div>";
     }
   }
