@@ -11,7 +11,7 @@ div.group {
   border: 1px black solid;
   float: left;
   padding: 0.5em;
-  margin-left: 10em;
+  margin-left: 5em;
   margin-bottom: 1em;
   width: 60em;
 }
@@ -31,7 +31,7 @@ div.breaker {
 
 div.button-container {
   float: left;
-  width: 11em;
+  width: 3em;
   height: 2.6em;
   /*border: 1px black solid;*/
   padding: 0.1em;
@@ -122,10 +122,10 @@ td.percent.block {
 </head>
 <body>
 <div id="noscript">This page does not work with javascript disabled</div>
-<div id="buttons" style="position: fixed; left: 0; top: 0; width: 5em;"></div>
+<div id="buttons" style="position: fixed; left: 0; top: 0; width: 2em;"></div>
 <div id="main"></div>
 <div class="breaker" />
-<div id="bottom" style="margin-left: 10em;">
+<div id="bottom" style="margin-left: 5em;">
 
 <p>Source code: <a href="https://github.com/krka/imperialdice/">https://github.com/krka/imperialdice/</a></p>
 </div>
@@ -143,21 +143,45 @@ function prettyStr(s) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function prettyPrintCumulativeTable(node, dice, table) {
-  var html = "";
+function removeChildren(node) {
+  var last;
+  while (last = node.lastChild) {
+    node.removeChild(last);
+  }
+}
+
+function createRemoveDie(container, name) {
+  var image = document.createElement("img");
+  image.src = "data:image/png;base64," + images[name];
+  image.className = "die-icon";
+  image.onclick = function() {
+    removeDie(name, container);
+  };
+  return image;
+}
+
+function printDice(container, node, dice) {
+  removeChildren(node);
   for (var name in dice) {
     var count = dice[name]["count"];
     if (count > 0) {
       if (count < 5) {
         for (var i = 0; i < count; i++) {
-           html += "<img src='data:image/png;base64," + images[name] + "' class='die-icon'> ";
+           var image = createRemoveDie(container, name);
+           node.appendChild(image);
+           node.appendChild(document.createTextNode(" "));
         }
       } else {
-           html += count + "x<img src='data:image/png;base64," + images[name] + "' class='die-icon'> ";
+         node.appendChild(document.createTextNode(count + "x"));
+         var image = createRemoveDie(container, name);
+         node.appendChild(image);
       }
     }
   }
+}
 
+function prettyPrintCumulativeTable(node, dice, table) {
+  var html = "";
   html += "<div style='clear: both' />";
 
   for (var typeIndex in typeOrdering) {
@@ -186,28 +210,11 @@ function prettyPrintCumulativeTable(node, dice, table) {
   node.innerHTML = html;
 }
 
-function updateDice(container) {
-  var dice = container["dice"];
-  var resTable = {};
-
-  for (var i in dicenames) {
-    var name = dicenames[i];
-    var obj = dice[name];
-    if (!obj) {
-      obj = {"count": 0};
-      dice[name] = obj;
-    }
-    var count = obj["count"];
-
-    buttons[name]["counter"].innerHTML = "" + count;
-    buttons[name]["removeNode"].disabled = count == 0;
-  }
-}
-
 function updateContainer(container) {
-  updateDice(container);
   var dice = container["dice"];
   var resTable = {};
+
+  printDice(container, container["diceNode"], dice);
 
   for (var i in dicenames) {
     var name = dicenames[i];
@@ -226,7 +233,6 @@ function addDie(name) {
 }
 
 function removeDie(name, container) {
-  container = container || focused;
   if (container["dice"][name]["count"] >= 1) {
     container["dice"][name]["count"]--;
     updateContainer(container);
@@ -241,54 +247,29 @@ function createButtons(name) {
   image.src = "data:image/png;base64," + images[name];
   image.className = "die-icon";
   child.appendChild(image);
+  image.onclick = function() { addDie(name); };
   
-
-  var remove = document.createElement("div");
-  remove.className = "dice-button";
-  //remove.innerHTML = "-";
-  remove.onclick = function() { removeDie(name); };
-
-  var add = document.createElement("div");
-  add.className = "dice-button";
-  //add.innerHTML = "+";
-  add.onclick = function() { addDie(name); };
-
-  var counter = document.createElement("span");
-  counter.className = "counter";
-  counter.innerHTML = "0";
-
-  child.appendChild(remove);
-  child.appendChild(add);
-  child.appendChild(counter);
-
-
-  var container = {"addNode": add, "removeNode": remove, "counter": counter, "element": child};
-
   var breaker = document.createElement("div");
   breaker.className = "breaker";
   child.appendChild(breaker);
 
-  return container;
+  return child;
 }
 
 function addButtons() {
   var dice = ["red", "blue", "green", "yellow", "black", "white"];
   var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
   var parent = document.getElementById("buttons");
-  var buttons = {};
   for (var i in dice) {
     var name = dice[i];
     var button = createButtons(name);
-    parent.appendChild(button["element"]);
-    buttons[name] = button;
+    parent.appendChild(button);
   }
   var addButton = document.createElement("input");
   addButton.onclick = addNew;
   addButton.value = "New";
   addButton.type = "button";
   parent.appendChild(addButton);
-
-  return buttons;
 }
 
 var focused = null;
@@ -296,6 +277,12 @@ var focused = null;
 function addNew() {
   var child = document.createElement("div");
   var container = {"dice": {}, "element": child};
+
+  for (var i in dicenames) {
+    var name = dicenames[i];
+    container["dice"][name] = {"count": 0};
+  }
+
   child.onclick = function() {
     if (focused == container) {
       return;
@@ -305,9 +292,13 @@ function addNew() {
     }
     child.className = "group focused";
     focused = container;
-    updateDice(container);
   }
   child.className = "group";
+
+  var diceNode = document.createElement("div");
+  diceNode.className = "dicenode";
+  child.appendChild(diceNode);
+  container["diceNode"] = diceNode;
 
   var result = document.createElement("div");
   result.className = "result";
@@ -589,7 +580,7 @@ aDxtaEuqL/MAAAAASUVORK5CYII=",
 var dicenames = ["red", "blue", "green", "yellow", "black", "white"];
 var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
 
-var buttons = addButtons();
+addButtons();
 addNew();
 
 </script>
