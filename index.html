@@ -11,7 +11,13 @@ div.group {
   border: 1px black solid;
   float: left;
   padding: 0.5em;
+  margin-left: 6em;
+  margin-bottom: 1em;
   width: 60em;
+}
+
+div.group.focused {
+  background-color: #ffffdd;
 }
 
 div.table {
@@ -114,10 +120,11 @@ td.percent.block {
 </head>
 <body>
 <div id="noscript">This page does not work with javascript disabled</div>
+<div id="buttons" style="position: fixed; left: 0; top: 0; width: 5em;">Dice</div>
 <div id="main"></div>
 <div class="breaker" />
-<div id="bottom">
-<input onclick="addNew()" value="Add new" type="button"/>
+<div id="bottom" style="margin-left: 5em;">
+
 <p>Source code: <a href="https://github.com/krka/imperialdice/">https://github.com/krka/imperialdice/</a></p>
 </div>
 <script>
@@ -135,7 +142,7 @@ function prettyStr(s) {
 }
 
 function prettyPrintCumulativeTable(node, dice, table) {
-  var html = "<h4>Dice</h4>";
+  var html = "";
   for (var name in dice) {
     var count = dice[name]["count"];
     if (count > 0) {
@@ -177,39 +184,54 @@ function prettyPrintCumulativeTable(node, dice, table) {
   node.innerHTML = html;
 }
 
-function updateContainer(container) {
+function updateDice(container) {
   var dice = container["dice"];
-  var dicenames = container["dicenames"];
+  var resTable = {};
+
+  for (var i in dicenames) {
+    var name = dicenames[i];
+    var obj = dice[name];
+    if (!obj) {
+      obj = {"count": 0};
+      dice[name] = obj;
+    }
+    var count = obj["count"];
+
+    buttons[name]["counter"].innerHTML = "" + count;
+    buttons[name]["removeNode"].disabled = count == 0;
+  }
+}
+
+function updateContainer(container) {
+  updateDice(container);
+  var dice = container["dice"];
   var resTable = {};
 
   for (var i in dicenames) {
     var name = dicenames[i];
     var count = dice[name]["count"];
-    var obj = dice[name];
-
-    container["dice"][name]["counter"].innerHTML = "" + count;
-    var tmpTable = repeatTable(container["tables"][name], count);
+    var tmpTable = repeatTable(tables[name], count);
     resTable = mergeTables(resTable, tmpTable);
-
-    container["dice"][name]["removeNode"].disabled = count == 0;
   }
   var t = toCumulative(resTable);
-  prettyPrintCumulativeTable(container["resultNode"], container["dice"], t);
+  prettyPrintCumulativeTable(container["resultNode"], dice, t);
 }
 
-function addDie(container, name) {
+function addDie(name) {
+  container = focused;
   container["dice"][name]["count"]++;
   updateContainer(container);
 }
 
-function removeDie(container, name) {
+function removeDie(name) {
+  container = focused;
   if (container["dice"][name]["count"] >= 1) {
     container["dice"][name]["count"]--;
     updateContainer(container);
   }
 }
 
-function createButtons(container, name) {
+function createButtons(name) {
   var child = document.createElement("div");
   child.className = "button-container";
 
@@ -223,14 +245,14 @@ function createButtons(container, name) {
   remove.className = "dice-button";
   remove.value = "-";
   remove.type = "button";
-  remove.onclick = function() { removeDie(container, name); };
+  remove.onclick = function() { removeDie(name); };
   remove.disabled = true;
 
   var add = document.createElement("input");
   add.className = "dice-button";
   add.value = "+";
   add.type = "button";
-  add.onclick = function() { addDie(container, name); };
+  add.onclick = function() { addDie(name); };
 
   var counter = document.createElement("span");
   counter.className = "counter";
@@ -240,46 +262,61 @@ function createButtons(container, name) {
   child.appendChild(add);
   child.appendChild(counter);
 
-  container["dice"][name]["addNode"] = add;
-  container["dice"][name]["removeNode"] = remove;
-  container["dice"][name]["counter"] = counter;
+
+  var container = {"addNode": add, "removeNode": remove, "counter": counter, "element": child};
 
   var breaker = document.createElement("div");
   breaker.className = "breaker";
   child.appendChild(breaker);
 
-  return child;
+  return container;
 }
 
-function addNew() {
+function addButtons() {
   var dice = ["red", "blue", "green", "yellow", "black", "white"];
   var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
-  var container = {"dice": {}, "dicenames": dice, "tables": tables};
-  var child = document.createElement("div");
-  child.className = "group";
-
-  var buttons = document.createElement("div");
-  buttons.className = "buttons-row";
+  var parent = document.getElementById("buttons");
+  var buttons = {};
   for (var i in dice) {
     var name = dice[i];
-    container["dice"][name] = {"count": 0};
-    var buttonsNode = createButtons(container, name);
-    buttons.appendChild(buttonsNode);
+    var button = createButtons(name);
+    parent.appendChild(button["element"]);
+    buttons[name] = button;
   }
+  var addButton = document.createElement("input");
+  addButton.onclick = addNew;
+  addButton.value = "New";
+  addButton.type = "button";
+  parent.appendChild(addButton);
 
-  var breaker = document.createElement("div");
-  breaker.className = "breaker";
-  buttons.appendChild(breaker);
+  return buttons;
+}
 
-  child.appendChild(buttons);
+var focused = null;
 
-  
+function addNew() {
+  var child = document.createElement("div");
+  var container = {"dice": {}, "element": child};
+  child.onclick = function() {
+    if (focused == container) {
+      return;
+    }
+    if (focused != null) {
+      focused.element.className = "group";
+    }
+    child.className = "group focused";
+    focused = container;
+    updateDice(container);
+  }
+  child.className = "group";
+
   var result = document.createElement("div");
   result.className = "result";
   child.appendChild(result);
   container["resultNode"] = result;
 
   document.getElementById("main").appendChild(child);
+  child.click();
 }
 
 // Logic functions
@@ -550,6 +587,10 @@ U8vGXhCWHBQxAAB8HeDKPW/tBZYcak3g1cju5pg8TykSAi+U4WtecwtleKcwgAzvRCMDAAAAnvVO\
 aDxtaEuqL/MAAAAASUVORK5CYII=",
 };
 
+var dicenames = ["red", "blue", "green", "yellow", "black", "white"];
+var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
+
+var buttons = addButtons();
 addNew();
 
 </script>
