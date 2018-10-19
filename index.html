@@ -132,6 +132,8 @@ td.percent.block {
 <div id="buttons" style="position: fixed; left: 0; top: 0; width: 4em; line-height: 0;"></div>
 <div id="main"></div>
 <div class="breaker" />
+<div style="margin-left: 5em;"><input type="button" value="Add new" onclick="addNew();"></div>
+<div class="breaker" />
 <div id="bottom" style="margin-left: 5em;">
 
 <p>Source code: <a href="https://github.com/krka/imperialdice/">https://github.com/krka/imperialdice/</a></p>
@@ -276,11 +278,6 @@ function addButtons() {
     var button = createButtons(name);
     parent.appendChild(button);
   }
-  var addButton = document.createElement("input");
-  addButton.onclick = addNew;
-  addButton.value = "New";
-  addButton.type = "button";
-  parent.appendChild(addButton);
 }
 
 var focused = null;
