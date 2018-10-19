@@ -207,7 +207,7 @@ function prettyPrintCumulativeTable(node, dice, table) {
           var obj = t[i];
           var value = obj["value"];
           var prob = obj["prob"];
-          if (value != "0") {
+          if (value != "0" && prob >= 0.001 && prob <= 0.999) {
             var probDisp = (100*prob).toPrecision(3) + "%";
             html += "<tr><td>&#8805;" + value + "</td><td class='percent " + type + "' style='background-size: " + probDisp + " 100%'>" + probDisp + "</td></tr>";
           }
