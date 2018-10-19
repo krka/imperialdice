@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 <title>Imperial dice</title>
 <style>
 
@@ -46,6 +47,7 @@ img.pressed {
 
 span.multiplier {
   font-size: 3em;
+  vertical-align: center;
 }
 
 span.counter {
@@ -155,6 +157,13 @@ function removeChildren(node) {
   }
 }
 
+function addPressed(button) {
+  button.onmousedown = function() { button.className = "die-icon pressed"; };
+  button.onmouseup = function() { button.className = "die-icon"; };
+  button.ontouchstart = function() { button.className = "die-icon pressed"; };
+  button.ontouchend = function() { button.className = "die-icon"; };
+}
+
 function createRemoveDie(container, name) {
   var image = document.createElement("img");
   image.src = "data:image/png;base64," + images[name];
@@ -162,8 +171,7 @@ function createRemoveDie(container, name) {
   image.onclick = function() {
     removeDie(name, container);
   };
-  image.onmousedown = function() { image.className = "die-icon pressed"; };
-  image.onmouseup = function() { image.className = "die-icon"; };
+  addPressed(image);
   return image;
 }
 
@@ -254,8 +262,7 @@ function createButtons(name) {
   image.src = "data:image/png;base64," + images[name];
   image.className = "die-icon";
   image.onclick = function() { addDie(name); };
-  image.onmousedown = function() { image.className = "die-icon pressed"; };
-  image.onmouseup = function() { image.className = "die-icon"; };
+  addPressed(image);
   
   return image;
 }
