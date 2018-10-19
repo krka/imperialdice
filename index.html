@@ -46,6 +46,13 @@ img.die-icon {
   height: 2em;
 }
 
+img.pressed {
+  margin-left: 5px;
+  margin-top: 5px;
+  margin-right: 1px;
+  margin-bottom: 1px;
+}
+
 span.counter {
   width: 2em;
   height: 1em;
@@ -160,6 +167,8 @@ function createRemoveDie(container, name) {
   image.onclick = function() {
     removeDie(name, container);
   };
+  image.onmousedown = function() { image.className = "die-icon pressed"; };
+  image.onmouseup = function() { image.className = "die-icon"; };
   return image;
 }
 
@@ -251,6 +260,8 @@ function createButtons(name) {
   image.className = "die-icon";
   child.appendChild(image);
   image.onclick = function() { addDie(name); };
+  image.onmousedown = function() { image.className = "die-icon pressed"; };
+  image.onmouseup = function() { image.className = "die-icon"; };
   
   var breaker = document.createElement("div");
   breaker.className = "breaker";
