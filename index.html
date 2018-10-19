@@ -244,13 +244,6 @@ function createButtons(name) {
 }
 
 function addButtons() {
-  var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
-  var parent = document.getElementById("buttons");
-  for (var i in dicenames) {
-    var name = dicenames[i];
-    var button = createButtons(name);
-    parent.appendChild(button);
-  }
 }
 
 var focused = null;
@@ -560,7 +553,14 @@ aDxtaEuqL/MAAAAASUVORK5CYII=",
 var dicenames = ["red", "blue", "green", "yellow", "black", "white"];
 var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
 
-addButtons();
+var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
+var parent = document.getElementById("buttons");
+for (var i in dicenames) {
+  var name = dicenames[i];
+  var button = createButtons(name);
+  parent.appendChild(button);
+}
+
 addNew();
 
 </script>
