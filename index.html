@@ -30,15 +30,6 @@ div.breaker {
   clear: both;
 }
 
-div.button-container {
-  float: left;
-  width: 3em;
-  height: 2.6em;
-  /*border: 1px black solid;*/
-  padding: 0.1em;
-  margin-right: 1em;
-}
-
 img.die-icon {
   padding: 1px 1px;
   margin: 3px 3px;
@@ -132,7 +123,7 @@ td.percent.block {
 </head>
 <body>
 <div id="noscript">This page does not work with javascript disabled</div>
-<div id="buttons" style="position: fixed; left: 0; top: 0; width: 2em;"></div>
+<div id="buttons" style="position: fixed; left: 0; top: 0; width: 4em; line-height: 0;"></div>
 <div id="main"></div>
 <div class="breaker" />
 <div id="bottom" style="margin-left: 5em;">
@@ -252,22 +243,14 @@ function removeDie(name, container) {
 }
 
 function createButtons(name) {
-  var child = document.createElement("div");
-  child.className = "button-container";
-
   var image = document.createElement("img");
   image.src = "data:image/png;base64," + images[name];
   image.className = "die-icon";
-  child.appendChild(image);
   image.onclick = function() { addDie(name); };
   image.onmousedown = function() { image.className = "die-icon pressed"; };
   image.onmouseup = function() { image.className = "die-icon"; };
   
-  var breaker = document.createElement("div");
-  breaker.className = "breaker";
-  child.appendChild(breaker);
-
-  return child;
+  return image;
 }
 
 function addButtons() {
