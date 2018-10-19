@@ -6,8 +6,6 @@
 <title>Imperial dice</title>
 <style>
 
-
-
 div.group {
   border: 1px black solid;
   float: left;
@@ -48,26 +46,6 @@ img.pressed {
 span.multiplier {
   font-size: 3em;
   vertical-align: center;
-}
-
-span.counter {
-  width: 2em;
-  height: 1em;
-  display: inline-block;
-  /*text-align: right*/
-}
-
-div.dice-button {
-  background-color: #aaa;
-  border: 1px black solid;
-  color: white;
-  padding: 1px 1px;
-  margin: 2px 2px;
-  text-align: center;
-  text-decoration: none;
-  width: 2em;
-  height: 2em;
-  display: inline-block;
 }
 
 div.table {
@@ -162,8 +140,8 @@ function removeChildren(node) {
 function addPressed(button) {
   button.onmousedown = function() { button.className = "die-icon pressed"; };
   button.onmouseup = function() { button.className = "die-icon"; };
-  button.ontouchstart = function() { button.className = "die-icon pressed"; };
-  button.ontouchend = function() { button.className = "die-icon"; };
+  button.ontouchstart = button.onmousedown;
+  button.ontouchend = button.onmouseup;
 }
 
 function createRemoveDie(container, name) {
@@ -184,13 +162,11 @@ function printDice(container, node, dice) {
     if (count > 0) {
       if (count < 5) {
         for (var i = 0; i < count; i++) {
-           var image = createRemoveDie(container, name);
-           node.appendChild(image);
+           node.appendChild(createRemoveDie(container, name));
            node.appendChild(document.createTextNode(" "));
         }
       } else {
-         var image = createRemoveDie(container, name);
-         node.appendChild(image);
+         node.appendChild(createRemoveDie(container, name));
          var span = document.createElement("span");
          span.className = "multiplier";
          span.innerText = "×" + count;
@@ -247,9 +223,8 @@ function updateContainer(container) {
 }
 
 function addDie(name) {
-  container = focused;
-  container["dice"][name]["count"]++;
-  updateContainer(container);
+  focused["dice"][name]["count"]++;
+  updateContainer(focused);
 }
 
 function removeDie(name, container) {
@@ -265,15 +240,13 @@ function createButtons(name) {
   image.className = "die-icon";
   image.onclick = function() { addDie(name); };
   addPressed(image);
-  
   return image;
 }
 
 function addButtons() {
-  var dice = ["red", "blue", "green", "yellow", "black", "white"];
   var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
   var parent = document.getElementById("buttons");
-  for (var i in dice) {
+  for (var i in dicenames) {
     var name = dice[i];
     var button = createButtons(name);
     parent.appendChild(button);
@@ -304,7 +277,6 @@ function addNew() {
   child.className = "group";
 
   var diceNode = document.createElement("div");
-  diceNode.className = "dicenode";
   child.appendChild(diceNode);
   container["diceNode"] = diceNode;
 
