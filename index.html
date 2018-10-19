@@ -247,7 +247,7 @@ function addButtons() {
   var tables = {"red": redTable, "blue": blueTable, "green": greenTable, "yellow": yellowTable, "black": blackTable, "white": whiteTable};
   var parent = document.getElementById("buttons");
   for (var i in dicenames) {
-    var name = dice[i];
+    var name = dicenames[i];
     var button = createButtons(name);
     parent.appendChild(button);
   }
